@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Xeliport — Operations Command Center</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --panel:#fff; --ink:#17243a; --muted:#68758a;
+    --line:#e4e9f0; --blue:#315ce8; --blue2:#edf2ff;
+    --amber:#b77912; --amber2:#fff5df; --green:#16835e; --green2:#e8f6f0;
+    --red:#c2414b; --red2:#fff0f1; --shadow:0 2px 8px rgba(23,36,58,.04),0 12px 30px rgba(23,36,58,.035);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+  button{font:inherit}
+  .top{height:66px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.96);display:flex;align-items:center;padding:0 28px;gap:18px;position:sticky;top:0;z-index:10;backdrop-filter:blur(12px)}
+  .brand{font-weight:800;letter-spacing:.2em;font-size:16px;color:#1b2b47}
+  .divider{height:24px;width:1px;background:var(--line)}
+  .title{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#777}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .pill{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;color:#59677c;font-size:12px}
+  .pill.active{background:var(--blue);color:white;border-color:var(--blue)}
+  .shell{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 66px)}
+  aside{background:#fff;border-right:1px solid var(--line);padding:24px 14px}
+  .smallcap{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#777;margin:6px 8px 10px}
+  .nav{display:flex;flex-direction:column;gap:5px}
+  .nav button{border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:9px;color:#536176;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;transition:.15s}
+  .nav button:hover{background:#f1efe9}
+  .nav button.active{background:var(--blue2);color:#254bc4;font-weight:650;box-shadow:inset 2px 0 #315ce8}
+  .badge{font-size:10px;border-radius:999px;padding:2px 6px;background:#eee;color:#777}
+  .badge.warn{background:var(--amber2);color:#ad7800}
+  .aside-bottom{margin-top:28px;border-top:1px solid var(--line);padding-top:16px}
+  .brand-card{padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  main{padding:34px 40px;max-width:1560px;margin:0 auto;width:100%}
+  .hero{display:flex;align-items:flex-end;gap:22px;margin-bottom:24px}
+  .hero h1{font-size:32px;margin:0 0 8px;letter-spacing:-.035em;line-height:1.15}
+  .hero p{margin:0;color:#6e6e6e;max-width:740px;line-height:1.5}
+  .hero-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 14px;cursor:pointer;color:#394960;font-weight:600;font-size:12px;transition:.15s}
+  .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn:hover{filter:brightness(.98)}
+  .notice{background:linear-gradient(110deg,#eef3ff,#f9fbff 70%);border:1px solid #dce5ff;border-radius:12px;padding:17px 20px;display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .notice-icon{width:34px;height:34px;border-radius:50%;background:#dce7ff;color:#214cc3;display:grid;place-items:center;font-weight:800}
+  .notice strong{display:block;margin-bottom:2px}
+  .notice span{font-size:13px;color:#606060}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:var(--shadow)}
+  .metric .k{font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.12em}
+  .metric .v{font-size:30px;font-weight:750;margin-top:9px;letter-spacing:-.04em}
+  .metric .s{font-size:12px;color:#777;margin-top:3px}
+  .grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(360px,1fr);gap:18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+  .card-head{padding:17px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .card-head h2{font-size:15px;margin:0}
+  .card-head span{font-size:11px;color:#777}
+  .tasks{padding:5px 0}
+  .task{display:grid;grid-template-columns:10px 1fr auto;gap:12px;padding:17px 18px;border-bottom:1px solid #edf0f4;align-items:center;cursor:pointer;transition:background .15s}
+  .task:last-child{border-bottom:0}
+  .task:hover{background:#fafafa}
+  .dot{width:8px;height:8px;border-radius:50%;margin-top:4px}
+  .dot.amber{background:var(--amber)} .dot.red{background:var(--red)} .dot.green{background:var(--green)}
+  .task-title{font-weight:650;font-size:13px}
+  .task-meta{font-size:11px;color:#777;margin-top:4px}
+  .task-cta{font-size:11px;border:1px solid var(--line);padding:8px 11px;border-radius:8px;background:#fff;color:#3152bb;font-weight:650;cursor:pointer}
+  .right-col{display:flex;flex-direction:column;gap:16px}
+  .layers{padding:8px}
+  .layer-row{display:grid;grid-template-columns:150px 1fr auto;gap:12px;align-items:center;padding:12px 10px;border-radius:9px}
+  .layer-row:hover{background:#fafafa}
+  .layer-name{font-weight:650;font-size:13px}
+  .bar{height:7px;background:#ece9e4;border-radius:99px;overflow:hidden}
+  .fill{height:100%;background:var(--blue);border-radius:99px}
+  .status{font-size:11px;white-space:nowrap;padding:5px 8px;border-radius:999px}
+  .status.ok{background:var(--green2);color:#137351}
+  .status.warn{background:var(--amber2);color:#a17000}
+  .cost{padding:14px 16px}
+  .cost-top{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}
+  .cost-big{font-size:28px;font-weight:750}
+  .cost-note{font-size:11px;color:#777}
+  .cost-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .cost-cell{padding:9px;border:1px solid var(--line);border-radius:10px}
+  .cost-cell b{display:block;font-size:13px}.cost-cell span{font-size:10px;color:#777}
+  .drawer{position:fixed;right:0;top:66px;width:420px;height:calc(100vh - 66px);background:#fff;border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(23,36,58,.12);transform:translateX(100%);transition:.25s;z-index:20;padding:24px;overflow:auto}
+  .drawer.open{transform:translateX(0)}
+  .drawer .close{float:right;border:0;background:#f4f2ed;border-radius:9px;padding:7px 9px;cursor:pointer}
+  .drawer h3{font-size:23px;margin:6px 0 8px;letter-spacing:-.02em}
+  .drawer p{color:#666;line-height:1.5;font-size:13px}
+  .why{background:#faf9f6;border:1px solid var(--line);border-radius:12px;padding:12px;margin:14px 0}
+  .why strong{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#777}
+  .step{display:flex;gap:10px;margin:10px 0;font-size:12px}.num{width:22px;height:22px;border-radius:50%;background:var(--blue2);color:#214cc3;display:grid;place-items:center;font-weight:700;flex:none}
+  .filterbar{display:flex;gap:6px}
+  .filterbar button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:7px 10px;font-size:11px;color:#647187;cursor:pointer}
+  .filterbar button.active{background:#1f1f1f;color:#fff}
+  .muted{color:#777}
+  :focus-visible{outline:3px solid #9bb3ff;outline-offset:2px}
+  @media(max-width:1050px){.shell{grid-template-columns:1fr}aside{display:none}main{padding:28px}.metrics{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.hero{display:block}.hero-actions{margin-top:16px;justify-content:flex-start}}
+  @media(max-width:600px){.top{padding:12px 16px;height:auto;min-height:62px;flex-wrap:wrap;gap:10px}.title,.divider{display:none}.top-right{width:100%;margin:0;overflow:auto}.shell{min-height:calc(100vh - 62px)}main{padding:22px 16px}.hero h1{font-size:27px}.metrics{grid-template-columns:1fr 1fr;gap:9px}.metric{padding:14px}.metric .v{font-size:25px}.grid{gap:14px}.card-head{align-items:flex-start;flex-wrap:wrap}.filterbar{width:100%}.filterbar button{flex:1}.drawer{top:0;height:100vh;width:100%;padding:22px}.layer-row{grid-template-columns:110px 1fr;gap:8px}.layer-row .status{grid-column:2;justify-self:start}.task{grid-template-columns:8px 1fr;gap:10px}.task-cta{grid-column:2;justify-self:start}.notice{align-items:flex-start;padding:14px}.cost-grid{gap:5px}.cost-cell{padding:8px 6px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">XELIPORT</div>
+  <div class="divider"></div>
+  <div class="title">Operations Command Center</div>
+  <div class="top-right">
+    <span class="pill active">UAE</span><span class="pill">UK</span><span class="pill">SG</span>
+    <span class="pill">F&B / Packaged ▾</span>
+  </div>
+</header>
+
+<div class="shell">
+<aside>
+  <div class="smallcap">Workspace</div>
+  <nav class="nav">
+    <button class="active" onclick="setView('overview',this)">Overview <span class="badge">6 layers</span></button>
+    <button onclick="setView('actions',this)">Action Center <span class="badge warn">3</span></button>
+    <button onclick="setView('timeline',this)">Launch Timeline <span class="badge">8</span></button>
+  </nav>
+  <div class="smallcap" style="margin-top:24px">Layers</div>
+  <nav class="nav">
+    <button onclick="openDrawer('Compliance')">Compliance <span class="badge warn">2</span></button>
+    <button onclick="openDrawer('Shipping')">Shipping <span class="badge">✓</span></button>
+    <button onclick="openDrawer('3PL & Warehouse')">3PL & Warehouse <span class="badge">✓</span></button>
+    <button onclick="openDrawer('Marketplace')">Marketplace <span class="badge">✓</span></button>
+    <button onclick="openDrawer('Retail & B2B')">Retail & B2B <span class="badge warn">1</span></button>
+    <button onclick="openDrawer('Forex & Banking')">Forex & Banking <span class="badge">✓</span></button>
+  </nav>
+  <div class="aside-bottom">
+    <div class="brand-card">
+      <div class="smallcap" style="margin:0 0 4px">Active brand</div>
+      <b>Demo Brand Co.</b>
+      <div class="muted" style="font-size:11px;margin-top:4px">UAE launch • Pilot cohort</div>
+    </div>
+  </div>
+</aside>
+
+<main id="main">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">UAE launch · Demo Brand Co.</div>
+      <h1>You're 78% launch-ready</h1>
+      <p>We’ve combined the six operational layers into one view. Three items need attention before the next shipment; everything else is progressing normally.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="btn primary" onclick="focusActions()">Resolve 3 actions</button>
+      <button class="btn" onclick="toggleAll()">View full checklist</button>
+    </div>
+  </section>
+
+  <div class="notice" role="note">
+    <div class="notice-icon">→</div>
+    <div><strong>Recommended next move: approve Arabic + English billing artwork</strong><span>This unblocks UAE compliance and prevents a shipment delay. Xeliport has already grouped the dependent tasks for you.</span></div>
+  </div>
+
+  <section class="metrics">
+    <div class="metric"><div class="k">Launch readiness</div><div class="v">78%</div><div class="s">↑ 6 pts since last sync</div></div>
+    <div class="metric"><div class="k">Needs you</div><div class="v">3</div><div class="s">1 critical • 2 normal</div></div>
+    <div class="metric"><div class="k">At-risk milestones</div><div class="v">1</div><div class="s">Arabic artwork dependency</div></div>
+    <div class="metric"><div class="k">Estimated launch cost</div><div class="v">₹1.14L</div><div class="s">₹28K compliance + routed ops</div></div>
+  </section>
+
+  <div class="grid">
+    <section class="card" id="actionCard">
+      <div class="card-head">
+        <div><h2>Action Center</h2><span>Only decisions that require your input</span></div>
+        <div class="filterbar">
+          <button class="active" onclick="filterTasks('all',this)">All</button>
+          <button onclick="filterTasks('critical',this)">Critical</button>
+          <button onclick="filterTasks('normal',this)">Normal</button>
+        </div>
+      </div>
+      <div class="tasks" id="tasks">
+        <div class="task" data-type="critical" onclick="openTask('Arabic + English billing artwork','Compliance','Approve artwork for 3 SKUs','Critical because UAE Federal Law No. 15 labeling is a shipment dependency.')">
+          <div class="dot red"></div><div><div class="task-title">Approve Arabic + English billing artwork</div><div class="task-meta">3 SKUs • blocks UAE compliance completion</div></div><button class="task-cta">Review</button>
+        </div>
+        <div class="task" data-type="normal" onclick="openTask('UAE nutritional labelling','Compliance','Confirm final GSO 2233:2019 format','The platform is preparing the compliant format; you only need to confirm the final label copy.')">
+          <div class="dot amber"></div><div><div class="task-title">Confirm UAE nutritional labelling</div><div class="task-meta">GSO 2233:2019 • final format in progress</div></div><button class="task-cta">Confirm</button>
+        </div>
+        <div class="task" data-type="normal" onclick="openTask('Retail partner onboarding','Retail & B2B','Choose preferred partner route','Two partner routes are ready; Xeliport has already summarized the trade-offs.')">
+          <div class="dot amber"></div><div><div class="task-title">Choose retail partner route</div><div class="task-meta">2 options • 4-day decision window</div></div><button class="task-cta">Compare</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="right-col">
+      <section class="card">
+        <div class="card-head"><div><h2>Six-layer readiness</h2><span>One view across your launch operations</span></div><button class="btn" style="padding:7px 9px;font-size:11px" onclick="openDrawer('All layers')">How it works</button></div>
+        <div class="layers">
+          <div class="layer-row"><div class="layer-name">Compliance</div><div class="bar"><div class="fill" style="width:62%"></div></div><span class="status warn">2 actions</span></div>
+          <div class="layer-row"><div class="layer-name">Shipping</div><div class="bar"><div class="fill" style="width:91%"></div></div><span class="status ok">On track</span></div>
+          <div class="layer-row"><div class="layer-name">3PL & Warehouse</div><div class="bar"><div class="fill" style="width:84%"></div></div><span class="status ok">On track</span></div>
+          <div class="layer-row"><div class="layer-name">Marketplace</div><div class="bar"><div class="fill" style="width:88%"></div></div><span class="status ok">On track</span></div>
+          <div class="layer-row"><div class="layer-name">Retail & B2B</div><div class="bar"><div class="fill" style="width:71%"></div></div><span class="status warn">1 action</span></div>
+          <div class="layer-row"><div class="layer-name">Forex & Banking</div><div class="bar"><div class="fill" style="width:82%"></div></div><span class="status ok">On track</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div><h2>Cost exposure</h2><span>Estimated setup and launch operations</span></div></div>
+        <div class="cost">
+          <div class="cost-top"><div><div class="cost-big">₹1.14L</div><div class="cost-note">current estimated one-time + launch ops</div></div><span class="status warn">₹8K variable</span></div>
+          <div class="cost-grid">
+            <div class="cost-cell"><b>₹28K</b><span>Compliance</span></div>
+            <div class="cost-cell"><b>₹54K</b><span>Shipping + 3PL</span></div>
+            <div class="cost-cell"><b>₹32K</b><span>Marketplace + B2B</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="drawer" id="drawer">
+  <button class="close" onclick="closeDrawer()">Close</button>
+  <div id="drawerContent"></div>
+</div>
+
+<script>
+function openTask(title, layer, action, reason){
+  document.getElementById('drawerContent').innerHTML = `
+    <div class="smallcap" style="margin:0 0 8px">${layer}</div>
+    <h3>${title}</h3>
+    <p>${reason}</p>
+    <div class="why"><strong>What Xeliport already handled</strong>
+      <div class="step"><div class="num">1</div><div>Checked the applicable requirement and gathered the relevant shipment context.</div></div>
+      <div class="step"><div class="num">2</div><div>Grouped dependencies so you only see the decision needed from you.</div></div>
+      <div class="step"><div class="num">3</div><div>Prepared the next operational step once this decision is made.</div></div>
+    </div>
+    <h4>${action}</h4>
+    <p class="muted">Prototype interaction: select a decision, then return to the Action Center. The goal is to keep the underlying compliance / logistics complexity inside the product.</p>
+    <button class="btn primary" onclick="closeDrawer()">Complete decision</button>`;
+  document.getElementById('drawer').classList.add('open');
+}
+function openDrawer(layer){
+  if(layer==='All layers'){
+    document.getElementById('drawerContent').innerHTML = `<div class="smallcap" style="margin:0 0 8px">System view</div><h3>Why 78%?</h3><p>The score consolidates the six operational layers into one launch-readiness signal. Users can drill into a layer only when they need to understand the reason behind a score.</p><div class="why"><strong>Design intent</strong><p>Absorb reconciliation, dependencies, and prioritization in the platform rather than asking the user to mentally combine six separate workflows.</p></div>`;
+  } else {
+    document.getElementById('drawerContent').innerHTML = `<div class="smallcap" style="margin:0 0 8px">${layer}</div><h3>${layer}</h3><p>This prototype keeps layer-specific detail one click away instead of making the layer itself the default navigation model.</p><div class="why"><strong>At a glance</strong><div class="step"><div class="num">✓</div><div>Progress is summarized before detail.</div></div><div class="step"><div class="num">→</div><div>Dependencies and decisions are surfaced only when relevant.</div></div></div><button class="btn primary" onclick="closeDrawer()">Back to overview</button>`;
+  }
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open')}
+function filterTasks(type,btn){
+  document.querySelectorAll('.filterbar button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('.task').forEach(t=>t.style.display=(type==='all'||t.dataset.type===type)?'grid':'none');
+}
+function focusActions(){document.getElementById('actionCard').scrollIntoView({behavior:'smooth'});}
+function toggleAll(){
+  document.querySelectorAll('.task').forEach(t=>t.style.display='grid');
+  document.querySelectorAll('.filterbar button').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filterbar button').classList.add('active');
+}
+function setView(view,btn){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  const title = view==='actions' ? 'What needs your attention' : view==='timeline' ? 'Launch timeline' : "You're 78% launch-ready";
+  document.querySelector('.hero h1').textContent=title;
+  if(view==='timeline'){
+    document.querySelector('.hero p').textContent='See the cross-layer critical path to launch, with dependencies condensed into milestones rather than separate operational task lists.';
+  }else if(view==='actions'){
+    document.querySelector('.hero p').textContent='Three decisions require your input. Xeliport has already absorbed the operational detail behind them.';
+  }else{
+    document.querySelector('.hero p').textContent='We’ve combined the six operational layers into one view. Three items need attention before the next shipment; everything else is progressing normally.';
+  }
+}
+</script>
+</body>
+</html>
